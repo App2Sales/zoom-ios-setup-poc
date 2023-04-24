@@ -6,9 +6,12 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <MobileRTC/MobileRTC.h>
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, MobileRTCAuthDelegate>
 
+// NAO FUNCIONOU SEM ISSO
+@property (strong, nonatomic) UIWindow *window;
 
 @end
 

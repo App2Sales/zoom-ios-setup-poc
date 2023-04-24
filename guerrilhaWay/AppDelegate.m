@@ -6,6 +6,7 @@
 //
 
 #import "AppDelegate.h"
+#import <MobileRTC/MobileRTC.h>
 
 @interface AppDelegate ()
 
@@ -16,24 +17,69 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    [self setupSDK];
+    
     return YES;
 }
 
-
-#pragma mark - UISceneSession lifecycle
-
-
-- (UISceneConfiguration *)application:(UIApplication *)application configurationForConnectingSceneSession:(UISceneSession *)connectingSceneSession options:(UISceneConnectionOptions *)options {
-    // Called when a new scene session is being created.
-    // Use this method to select a configuration to create the new scene with.
-    return [[UISceneConfiguration alloc] initWithName:@"Default Configuration" sessionRole:connectingSceneSession.role];
+- (void)setupSDK {
+    NSString *sdkKey = @"y_e_hgpcRlGcJDnCCDv5Cg";
+    NSString *sdkSecret = @"Sj3QfVBvr5dG0iu1ah7eeFTPQFMEArce";
+    
+    MobileRTCSDKInitContext *context = [[MobileRTCSDKInitContext alloc] init];
+    context.domain = @"zoom.us";
+    context.enableLog = YES;
+    BOOL sdkInitSuc = [[MobileRTC sharedRTC] initialize:context];
+    if (sdkInitSuc) {
+        MobileRTCAuthService *authService = [[MobileRTC sharedRTC] getAuthService];
+                if (authService) {
+            authService.clientKey = sdkKey;
+            authService.clientSecret = sdkSecret;
+           // Set the authService delegate.
+            authService.delegate = self;
+            [authService sdkAuth];
+        }
+    }
 }
-
-
-- (void)application:(UIApplication *)application didDiscardSceneSessions:(NSSet<UISceneSession *> *)sceneSessions {
-    // Called when the user discards a scene session.
-    // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
-    // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
+// Include MobileRTCAuthDelegate methods
+#pragma mark - MobileRTCAuthDelegate
+/**
+* To monitor the status and catch errors that might occur during the authorization process, implement the onMobileRTCAuthReturn method
+*/
+- (void)onMobileRTCAuthReturn:(MobileRTCAuthError)returnValue {
+    switch (returnValue) {
+        case MobileRTCAuthError_Success:
+            NSLog(@"SDK successfully initialized.");
+            break;
+        case MobileRTCAuthError_KeyOrSecretEmpty:
+            NSLog(@"SDK key/secret was not provided. Replace sdkKey and sdkSecret at the top of this file with your SDK key/secret.");
+            break;
+        case MobileRTCAuthError_KeyOrSecretWrong:
+            NSLog(@"SDK key/secret is not valid.");
+            break;
+        case MobileRTCAuthError_Unknown:
+            NSLog(@"SDK key/secret is not valid.");
+            break;
+        default:
+            NSLog(@"SDK Authorization failed with MobileRTCAuthError: %u", returnValue);
+    }
+    
+    // SE A SDK FOR INICIALIZADA CORRETAMENTE, ENTAO, INICIAR A REUNIAO
+    if (returnValue == MobileRTCAuthError_Success) {
+        BOOL isAuthorized = [[MobileRTC sharedRTC] isRTCAuthorized];
+        NSLog(isAuthorized ? @"Authorized: Yes" : @"Authorized: No");
+        
+        MobileRTCMeetingJoinParam *joinParams = [[MobileRTCMeetingJoinParam alloc] init];
+        joinParams.userName = @"Samuel Bispo";
+        joinParams.meetingNumber = @"7327495810";
+        joinParams.password = @"6jHams";
+        joinParams.noAudio = YES;
+        joinParams.noVideo = YES;
+        
+        MobileRTCMeetingService *meetingService = [[MobileRTC sharedRTC] getMeetingService];
+        MobileRTCMeetError joinMeetingResult = [meetingService joinMeetingWithJoinParam:joinParams];
+        NSLog(@"joinMeeting, joinMeetingResult=%lu", joinMeetingResult);
+    }
 }
 
 
